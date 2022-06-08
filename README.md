@@ -1,8 +1,16 @@
 # Automated Help Desk
-1. This Slack App helps create Jira Tickets from within Slack App Shortcuts
-2. It also responds to messages when status set as `Out of Office`.
+
+## Prerequisites: 
+    
+    - Slack Account/Workspace
+    - JIRA Account 
+## Description
+
+    - This Slack App helps create Jira Tickets from within Slack App Shortcuts
+    - It also responds to messages when status set as `Out of Office`.
+
 ## Setup
-Follow the command to clone the project
+Follow the commands to clone the project
 ```
 git clone git@github.com:caxefaizan/slackapp.git
 cd slackapp
@@ -29,6 +37,8 @@ Slack apps use OAuth to manage access to Slack’s APIs. When an app is installe
 - lets add the scopes: 
     - `chat:write`: This grants your app the permission to post messages in channels it’s a member of.
     - `users:read`: Determines a user's currently set custom status by consulting their profile.
+
+> Read more about scopes and API methods [here](https://api.slack.com/methods).
 
 <p align="center">
     <img src="./images/scopes.png"/>
@@ -65,7 +75,7 @@ Slack apps use OAuth to manage access to Slack’s APIs. When an app is installe
 Name        Location    Callback ID
 Help Desk   Global      caxe_app_shortcut
 ```
-> **Important**: The **`callback id`** reflects in the [app.py](./app.py) #L43 as well. Make necessary changes if required.
+> <span style="color:red;">**Important :**</span> The **`callback id`** reflects in the [app.py](./app.py) as well. Make necessary changes if required.
 
 <p align="center">
     <img src="./images/shortcuts.png"/>
