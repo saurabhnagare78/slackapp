@@ -3,9 +3,16 @@ from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 import requests
 from requests.auth import HTTPBasicAuth
-
+from configparser import ConfigParser
 # Initializes your app with your bot token and socket mode handler
-app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
+
+configur = ConfigParser()
+configur.read('config.ini')
+
+app = App(token=configur.get("config","SLACK_BOT_TOKEN"))
+JIRA_TOKEN = configur.get("config","JIRA_TOKEN")
+JIRA_URL = configur.get("config","JIRA_URL")
+JIRA_USERNAME = configur.get("config","JIRA_USERNAME")
 
 data = {}
 with open('departments.txt', 'r') as fp:
@@ -268,10 +275,10 @@ def action_button_click(body, ack, say, view):
     }
     try:
         resp = requests.post(
-            url='https://caxefaizan.atlassian.net/rest/api/2/issue/', 
+            url= JIRA_URL, 
             json = ticket_data,
             headers = headers,
-            auth = HTTPBasicAuth('faizanzahid09@hotmail.com', 'YDUuNy1NRcWMe2AG5JT70355')
+            auth = HTTPBasicAuth(JIRA_USERNAME, JIRA_TOKEN)
             )
     except Exception as e:
         print(e)
@@ -284,4 +291,4 @@ def action_button_click(body, ack, say, view):
 
 # Start your app
 if __name__ == "__main__":
-    SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()
+    SocketModeHandler(app, configur.get("config","SLACK_APP_TOKEN")).start()

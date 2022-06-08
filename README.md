@@ -1,4 +1,6 @@
 # Automated Help Desk
+1. This Slack App helps create Jira Tickets from within Slack App Shortcuts
+2. It also responds to messages when status set as `Out of Office`.
 ## Setup
 Follow the command to clone the project
 ```
