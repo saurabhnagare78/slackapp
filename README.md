@@ -65,11 +65,6 @@ if __name__ == "__main__":
 ```
 Run the app `python app.py`
 
-
-
-
-
-
 ## HelpDesk Automation
 Structure
 1. Select Relevant Department
@@ -90,3 +85,4 @@ But if the clear date is not provided our response would be
 Hi, User!!!
 I'll be Out of Office for a while. In case of emergency please reach out to <YOUR_CAREER_MANAGER>. Thanks
 ```
+> The App autoreplies once every 20 unresponded messages per channel during the day.   

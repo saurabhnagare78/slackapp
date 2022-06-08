@@ -29,11 +29,12 @@ def respond(event, say, context, client, body ):
             token = USER_TOKEN, 
             channel = event["channel"], 
             oldest = last_read, 
-            limit = 20
         )["messages"]
-
         replied = False
-        for message in reversed(message_list):
+        for idx, message in enumerate(message_list):
+            # reply for every 20 Unresponded texts
+            if idx == 19:
+                break
             if "Out of Office" in message["text"]:
                 replied = True
                 break
