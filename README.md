@@ -71,17 +71,20 @@ Help Desk   Global      caxe_app_shortcut
     <img src="./images/shortcuts.png"/>
 </p>
 
-## We're all set!!!
 > Remember to keep all tokens secure.
 
-Create your Env variables
+Use a `config.ini` file to store all tokens and ids.
+
 ```
-export SLACK_APP_TOKEN=<your-app-level-token>
-export SLACK_BOT_TOKEN=xoxb-<your-bot-token>
+# A typical config file.
+[config]
+KEY1 = VALUE1
+KEY2 = VALUE2
 ```
-Create the app py file
+
+Create the [app.py](./app.py) file.
 ```
-# Basic Structure
+# eg. app.py
 import os
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
@@ -93,7 +96,6 @@ app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
 if __name__ == "__main__":
     SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()
 ```
-Run the app `python app.py`
 
 ## HelpDesk Automation
 ### Structure for Form Generation
@@ -118,3 +120,6 @@ Hi, User!!!
 I'll be Out of Office for a while. In case of emergency please reach out to <YOUR_CAREER_MANAGER>. Thanks
 ```
 > The App autoreplies once every 20 unresponded messages per channel during the day.   
+
+## We're all set!!!
+Run the app `python3 app.py`
