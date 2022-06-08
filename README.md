@@ -28,12 +28,16 @@ Slack apps use OAuth to manage access to Slack’s APIs. When an app is installe
     - `chat:write`: This grants your app the permission to post messages in channels it’s a member of.
     - `users:read`: Determines a user's currently set custom status by consulting their profile.
 
-![alt text](./images/scopes.png)
+<p align="center">
+    <img src="./images/scopes.png"/>
+</p>
 
 - Scroll up to the top of the OAuth & Permissions page and click Install App to Workspace. You’ll be led through Slack’s OAuth UI, where you should allow your app to be installed to your development workspace.
 - Once you authorize the installation, you’ll land on the OAuth & Permissions page and see a Bot User OAuth Access Token.
 
-![alt text](./images/bot-token.png)
+<p align="center">
+    <img src="./images/bot-token.png"/>
+</p>
 
 - Head over to Basic Information and scroll down under the App-Level Token section > Generate Token and Scopes (to generate an app-level token). 
     - Add token name and the `connections:write` scope to this token and save the generated xapp token.
@@ -47,7 +51,9 @@ Slack apps use OAuth to manage access to Slack’s APIs. When an app is installe
     - `message:im`
     - `user_status_changed`
 
-![alt text](./images/events.png)
+<p align="center">
+    <img src="./images/events.png"/>
+</p>
 
 ## App Settings
 - App Home > Enable Messages Tab
@@ -59,7 +65,9 @@ Help Desk   Global      caxe_app_shortcut
 ```
 > **Important**: The **`callback id`** reflects in the [app.py](./app.py) #L43 as well. Make necessary changes if required.
 
-![alt text](./images/shortcuts.png)
+<p align="center">
+    <img src="./images/shortcuts.png"/>
+</p>
 
 ## We're all set!!!
 > Remember to keep all tokens secure.
