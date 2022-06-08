@@ -20,20 +20,26 @@ def respond(event, say, context, client, body ):
     # add event if status set to out of office set presence as away
     user_presence = app.client.users_getPresence(user = receiver)["presence"]
     user_info = app.client.users_info(user = receiver)["user"]
-
     if (user_presence == "away") and (user_info["profile"]["status_text"]== "Out of Office") and (not sender == receiver):
         expiration = user_info["profile"]["status_expiration"]
-        dt = datetime.datetime.fromtimestamp(expiration)
-        text = f"Hi, <@{ sender }>!!!\nI am Out of Office and will be back on {dt}"
-        app.client.chat_postMessage(
-            # response from Bot
-            # token = client.token, 
-            # username = user_info["name"],
-            # icon_url = user_info["profile"]["image_24"],
-            token = USER_TOKEN,
-            channel = sender,
-            text = text,
-        )
+        if not expiration == 0:
+            dt = datetime.datetime.fromtimestamp(expiration)
+            text = f"Hi, <@{ sender }>!!!\nI am Out of Office and will be back on {dt}"
+        else:
+            # add career manager instead of U032ATMNLVC or any other profile field that may exist.
+            text = f"Hi, <@{ sender }>!!!\nI'll be Out of Office for a while.\nIn case of emergency please reach out to <@U032ATMNLVC>.\nThanks"
+        try:
+            app.client.chat_postMessage(
+                # response from Bot
+                # token = client.token, 
+                # username = user_info["name"],
+                # icon_url = user_info["profile"]["image_24"],
+                token = USER_TOKEN,
+                channel = sender,
+                text = text,
+            )
+        except Exception as err:
+            print(err)
 
 @app.event("user_status_changed")
 def handle_user_status_changed_events(body, logger, event):
@@ -45,7 +51,6 @@ def handle_user_status_changed_events(body, logger, event):
             print(app.client.users_setPresence(token = USER_TOKEN,presence = "away"))
     except Exception as err:
         print(err)
-    # print(json.dumps(body, indent = 4))
 
 
 # Start your app

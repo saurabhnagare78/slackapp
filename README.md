@@ -36,8 +36,11 @@ Slack apps use OAuth to manage access to Slack’s APIs. When an app is installe
 
 ## Setting up events
 - Navigate to Event Subscriptions on the left sidebar and toggle to enable. 
-- Under Subscribe to Bot Events > Add Bot User Event > `message:im`
-- Subscribe to events on behalf of users > Add Workspace Event > `message:im`
+- Under Subscribe to Bot Events > Add Bot User Event > 
+    - `message:im`
+- Subscribe to events on behalf of users > Add Workspace Event > 
+    - `message:im`
+    - `user_status_changed`
 ## We're all set!!!
 > Remember to keep all tokens secure.
 
@@ -45,10 +48,10 @@ Create your Env variables
 ```
 export SLACK_APP_TOKEN=<your-app-level-token>
 export SLACK_BOT_TOKEN=xoxb-<your-bot-token>
-
 ```
 Create the app py file
 ```
+# Basic Structure
 import os
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
@@ -67,9 +70,23 @@ Run the app `python app.py`
 
 
 
-
+## HelpDesk Automation
 Structure
 1. Select Relevant Department
-    To include more departments, add each in departments.txt on a separate line and then create a file called DEPARTMENTNAME_categories.txt.
+    To include more departments, add each in `departments.txt` on a separate line and then create a corresponding file called `DEPARTMENTNAME_categories.txt`.
 2. Select Issue Category
-    To include new issue categories for existing or newly created department, add them in their respective DEPARTMENTNAME_categories.txt file on a separate line.
+    To include new issue categories for existing or newly created department, add them in their respective `DEPARTMENTNAME_categories.txt` file on a separate line.
+
+## Auto Out Of Office Replies
+To use this feature set your status as `Out of Office`.
+The App will generate a response on your behalf as:
+```    
+Hi, User!!!
+I am Out of Office and will be back on 2022-06-08 14:42:10
+```
+The time is calculated based on your Status Expiration time.
+But if the clear date is not provided our response would be
+```
+Hi, User!!!
+I'll be Out of Office for a while. In case of emergency please reach out to <YOUR_CAREER_MANAGER>. Thanks
+```
