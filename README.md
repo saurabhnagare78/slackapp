@@ -66,10 +66,23 @@ if __name__ == "__main__":
 Run the app `python app.py`
 
 ## HelpDesk Automation
-Structure
-1. Select Relevant Department
+### App Settings
+> App Home > Enable Messages Tab
+>
+> Interactivity & Shortcuts > Enable
+>
+> Create Shortcut with the following details 
+
+    - Name        Location    Callback ID
+    - Help Desk   Global      caxe_app_shortcut
+> **Important**: The **`callback id`** reflects in the code as well. Make necessary changes if required.
+
+### Structure for Form Generation
+1. Departments
+
     To include more departments, add each in `departments.txt` on a separate line and then create a corresponding file called `DEPARTMENTNAME_categories.txt`.
-2. Select Issue Category
+2. Categories
+
     To include new issue categories for existing or newly created department, add them in their respective `DEPARTMENTNAME_categories.txt` file on a separate line.
 
 ## Auto Out Of Office Replies
