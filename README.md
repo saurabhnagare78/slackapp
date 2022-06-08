@@ -2,12 +2,12 @@
 ## Setup
 Follow the command to clone the project
 ```
-git clone http://FG4/faizan.qazi/slackapp.git
+git clone git@github.com:caxefaizan/slackapp.git
 cd slackapp
 python -m venv venv
-source venv/bin/activate || .\venv\Scripts\activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+source venv/bin/activate
+python3 -m pip install --upgrade pip
+python3 -m pip install -r requirements.txt
 ```
 ## Setting up the App
 > We recommend using a workspace where you won’t disrupt real work getting done. You can create a new one for free [here](https://slack.com/get-started#create)
@@ -24,12 +24,17 @@ python -m pip install -r requirements.txt
 Slack apps use OAuth to manage access to Slack’s APIs. When an app is installed, you’ll receive a token that the app can use to call API methods.
 
 - Navigate to the OAuth & Permissions on the left sidebar and scroll down to the Bot Token Scopes section. Click Add an OAuth Scope.
-- For now, we’ll add two scopes: 
+- lets add the scopes: 
     - `chat:write`: This grants your app the permission to post messages in channels it’s a member of.
     - `users:read`: Determines a user's currently set custom status by consulting their profile.
+
+![alt text](./images/scopes.png)
+
 - Scroll up to the top of the OAuth & Permissions page and click Install App to Workspace. You’ll be led through Slack’s OAuth UI, where you should allow your app to be installed to your development workspace.
 - Once you authorize the installation, you’ll land on the OAuth & Permissions page and see a Bot User OAuth Access Token.
+
 ![alt text](./images/bot-token.png)
+
 - Head over to Basic Information and scroll down under the App-Level Token section > Generate Token and Scopes (to generate an app-level token). 
     - Add token name and the `connections:write` scope to this token and save the generated xapp token.
 - Navigate to Socket Mode on the left side menu and toggle to enable. ( We will change it to http later )
@@ -41,6 +46,21 @@ Slack apps use OAuth to manage access to Slack’s APIs. When an app is installe
 - Subscribe to events on behalf of users > Add Workspace Event > 
     - `message:im`
     - `user_status_changed`
+
+![alt text](./images/events.png)
+
+## App Settings
+- App Home > Enable Messages Tab
+- Interactivity & Shortcuts > Enable
+- Create Shortcut with the following details 
+```
+Name        Location    Callback ID
+Help Desk   Global      caxe_app_shortcut
+```
+> **Important**: The **`callback id`** reflects in the [app.py](./app.py) #L43 as well. Make necessary changes if required.
+
+![alt text](./images/shortcuts.png)
+
 ## We're all set!!!
 > Remember to keep all tokens secure.
 
@@ -66,17 +86,6 @@ if __name__ == "__main__":
 Run the app `python app.py`
 
 ## HelpDesk Automation
-### App Settings
-> App Home > Enable Messages Tab
->
-> Interactivity & Shortcuts > Enable
->
-> Create Shortcut with the following details 
-
-    - Name        Location    Callback ID
-    - Help Desk   Global      caxe_app_shortcut
-> **Important**: The **`callback id`** reflects in the code as well. Make necessary changes if required.
-
 ### Structure for Form Generation
 1. Departments
 
