@@ -6,8 +6,8 @@
     - JIRA Account 
 ## Description
 
-    - This Slack App helps create Jira Tickets from within Slack App Shortcuts
-    - It also responds to messages when status set as `Out of Office`.
+    - This Slack App helps create Jira Tickets from within Slack App Shortcuts (app.py)
+    - It also responds to messages when status set as `Out of Office`. (app_autoresp.py)
 
 ## Setup
 Follow the commands to clone the project
@@ -30,14 +30,18 @@ python3 -m pip install -r requirements.txt
     - Select the Workspace
 - Create App
 
-## Tokens and installing apps
+## Tokens and Installing apps
+> For HTTP Mode we will have to add `Redirect URLs` as well`.
+
 Slack apps use OAuth to manage access to Slack’s APIs. When an app is installed, you’ll receive a token that the app can use to call API methods.
 
 - Navigate to the OAuth & Permissions on the left sidebar and scroll down to the Bot Token Scopes section. Click Add an OAuth Scope.
 - lets add the scopes: 
     - `chat:write`: This grants your app the permission to post messages in channels it’s a member of.
     - `users:read`: Determines a user's currently set custom status by consulting their profile.
-
+    - `users:write`: Set a user’s presence
+    - `im:history`: View messages and other content in a user’s direct messages
+    - `im:read`: View basic information about a user’s direct messages
 > Read more about scopes and API methods [here](https://api.slack.com/methods).
 
 <p align="center">
@@ -56,6 +60,7 @@ Slack apps use OAuth to manage access to Slack’s APIs. When an app is installe
 - Navigate to Socket Mode on the left side menu and toggle to enable. ( We will change it to http later )
 
 ## Setting up events
+> For HTTP mode we will have to add a `Request URL` as well.
 - Navigate to Event Subscriptions on the left sidebar and toggle to enable. 
 - Under Subscribe to Bot Events > Add Bot User Event > 
     - `message:im`
@@ -134,7 +139,7 @@ I'll be Out of Office for a while. In case of emergency please reach out to <YOU
 ## We're all set!!!
 Run the app `python3 app.py`
 
-# HTTP Mode
+# HTTP Mode (Disable Socket Mode)
 ## Install ngrok
 ```
 curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | \
@@ -152,3 +157,43 @@ ngrok config add-authtoken TOKEN
 ```
 - Start Bolt `python app.py`
 - Startk ngrok `ngrok http 3000`
+- Append the forarding link with /slack/install
+    - eg. `https://46db-49-36-200-218.ngrok.io/slack/install`
+    - Authorize the installation and you are good to go.
+
+## JIRA Setup
+- Login to your Jira Account
+- Go to your account settings > Security > API Tokens > Create and Manage Tokens > Create Api Token > Copy it and store it in your `config.ini` file. (You wont be able to see it again)
+```
+# config.ini
+[jira]
+JIRA_TOKEN = YOUR_TOKEN
+JIRA_URL = https://caxefaizan.atlassian.net/rest/api/2/issue/
+JIRA_USERNAME = YOUR_JIRA_USERNAME
+```
+Create a New Project (HR). It reflects in `app.py`
+
+```
+ticket_data = {
+    "fields": {
+        "project": {
+            "key": "HR"
+        }
+```
+- Project Settings > Create Rule
+- Actor > Automation for Jira
+    - When: Issue Created
+    - Then: Assign issue
+        - Assign the issue to > A user in a defined list
+        - Method to choose assignee > Balanced workload
+        - JQL to restrict issues > statusCategory != Done
+        - User list > HR1, HR2, HR3
+
+<p align="center">
+    <img src="./images/jira.png"/>
+</p>
+
+- Apps > Slack Integration
+<p align="center">
+    <img src="./images/jira2.png"/>
+</p>

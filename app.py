@@ -10,9 +10,9 @@ configur = ConfigParser()
 configur.read('config.ini')
 
 app = App(token=configur.get("config","SLACK_BOT_TOKEN"))
-JIRA_TOKEN = configur.get("config","JIRA_TOKEN")
-JIRA_URL = configur.get("config","JIRA_URL")
-JIRA_USERNAME = configur.get("config","JIRA_USERNAME")
+JIRA_TOKEN = configur.get("jira","JIRA_TOKEN")
+JIRA_URL = configur.get("jira","JIRA_URL")
+JIRA_USERNAME = configur.get("jira","JIRA_USERNAME")
 
 data = {}
 with open('departments.txt', 'r') as fp:
@@ -35,17 +35,6 @@ for option in data.keys():
             "value": f"dept_{option}"
         } 
     )
-
-
-# Listens to incoming messages that contain "hello"
-# @app.message("hello")
-# def message_hello(message, say):
-#     # say() sends a message to the channel where the event was triggered
-#     print(dir(say))
-#     say(
-#         text=f"Hey there <@{message['user']}>!",
-#     )
-
 
 @app.shortcut("caxe_app_shortcut")
 def open_modal(ack, shortcut, client):
