@@ -1,11 +1,8 @@
 import os
+import datetime
+from configparser import ConfigParser
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
-import datetime
-from slack_bolt.oauth.oauth_settings import OAuthSettings
-from slack_sdk.oauth.installation_store import FileInstallationStore
-from slack_sdk.oauth.state_store import FileOAuthStateStore
-from configparser import ConfigParser
 from slack_bolt.authorization import AuthorizeResult
 
 configur = ConfigParser()
@@ -32,26 +29,14 @@ def authorize(enterprise_id, team_id, logger):
               team_id=team_id,
               user_token=team["user_token"],
               user_id=team["user_id"],
-          )
-
-
-# oauth_settings = OAuthSettings(
-#     client_id=configur.get("config2","SLACK_CLIENT_ID"),
-#     client_secret=configur.get("config2","SLACK_CLIENT_SECRET"),
-#     scopes=["chat:write.customize", "chat:write"],
-#     user_scopes=["im:history", "im:read", "users:read", "users:write"],
-#     installation_store=FileInstallationStore(base_dir="./data/installations"),
-#     state_store=FileOAuthStateStore(expiration_seconds=600, base_dir="./data/states")
-# )
+            )
 
 # Initializes your app with your bot token and socket mode handler
 app = App(
-    # token=configur.get("config2","SLACK_BOT_TOKEN"),
     signing_secret=configur.get("config2","SLACK_SIGNING_SECRET"),
-    # oauth_settings=oauth_settings,
     authorize = authorize
 )
-USER_TOKEN = configur.get("config2","SLACK_USER_TOKEN")
+# USER_TOKEN = configur.get("config2","SLACK_USER_TOKEN")
 
 # message is an event handler refer: https://api.slack.com/events ; 
 @app.event("message") 
@@ -60,7 +45,6 @@ def respond(event, say, context, client, body ):
     USER_TOKEN = context.user_token
     sender = event["user"]
     receiver = body["authorizations"][0]["user_id"]
-    # add event if status set to out of office set presence as away
     # for info on methods: https://api.slack.com/methods
     user_presence = app.client.users_getPresence(
         user = receiver, 
@@ -105,7 +89,7 @@ def respond(event, say, context, client, body ):
                 text = f"Hi, <@{ sender }>!!!\nI'll be Out of Office for a while.\nIn case of emergency please reach out to <@U032ATMNLVC>.\nThanks"
             try:
                 app.client.chat_postMessage(
-                    # response from Bot
+                    # respond with Bot
                     # token = client.token, 
                     # username = user_info["name"],
                     # icon_url = user_info["profile"]["image_24"],
