@@ -42,10 +42,20 @@ def respond(event, say, context, client, body ):
         token = USER_TOKEN
     )["user"]
     if (user_presence == "away") and (user_info["profile"]["status_text"]== "Out of Office") and (not sender == receiver):
+        try:
+            installation_store = FileInstallationStore(base_dir="./data/installations")
+            x = installation_store.find_installation(
+                enterprise_id = user_info.get("enterprise_id",None),
+                team_id = user_info["team_id"],
+                user_id = user_info["id"],
+                is_enterprise_install = user_info.get("is_enterprise_install",False),
+            )
+            RECEIVER_TOKEN = x.user_token
+        except:
+            print('failed to fetch user token')
         # message last read by receiver
-        print('Yea')
         last_read = app.client.conversations_info(
-            token = USER_TOKEN, 
+            token = RECEIVER_TOKEN, 
             channel = event["channel"]
         )["channel"]["last_read"]
         
@@ -53,7 +63,7 @@ def respond(event, say, context, client, body ):
         # after 20 texts reply again to remind we are out of office
 
         message_list = app.client.conversations_history(
-            token = USER_TOKEN, 
+            token = RECEIVER_TOKEN, 
             channel = event["channel"], 
             oldest = last_read, 
         )["messages"]
@@ -67,7 +77,6 @@ def respond(event, say, context, client, body ):
                 break
 
         if not replied:
-            print('Not Replied')
             expiration = user_info["profile"]["status_expiration"]
             if not expiration == 0:
                 dt = datetime.datetime.fromtimestamp(expiration)
@@ -76,20 +85,21 @@ def respond(event, say, context, client, body ):
                 # add career manager instead of U032ATMNLVC or any other profile field that may exist.
                 text = f"Hi, <@{ sender }>!!!\nI'll be Out of Office for a while.\nIn case of emergency please reach out to <@U032ATMNLVC>.\nThanks"
             try:
+                
                 app.client.chat_postMessage(
                     # respond with Bot
                     # token = client.token, 
                     # username = user_info["name"],
                     # icon_url = user_info["profile"]["image_24"],
-                    token = USER_TOKEN,
-                    channel = receiver,
+                    token = RECEIVER_TOKEN,
+                    channel = sender,
                     text = text,
                 )
             except Exception as err:
                 print(err)
         else:
+            print("Already Replied")
             pass
-            # print("Already Replied")
 
 # When selecting Out of Office, change presence to away
 @app.event("user_status_changed")
@@ -107,7 +117,7 @@ def handle_user_status_changed_events(logger, event, context):
 
 # Start your app
 if __name__ == "__main__":
-    # Socket Mode
+    ## Socket Mode
     # SocketModeHandler(app, configur.get("config2","SLACK_APP_TOKEN")).start()
-    # HTTP Mode
+    ## HTTP Mode
     app.start(port=int(os.environ.get("PORT", 3000)))
