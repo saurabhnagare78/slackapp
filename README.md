@@ -133,3 +133,22 @@ I'll be Out of Office for a while. In case of emergency please reach out to <YOU
 
 ## We're all set!!!
 Run the app `python3 app.py`
+
+# HTTP Mode
+## Install ngrok
+```
+curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | \
+      sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && \
+      echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | \
+      sudo tee /etc/apt/sources.list.d/ngrok.list && \
+      sudo apt update && sudo apt install ngrok
+```
+## Connect your agent to your ngrok account
+Now that the ngrok agent is installed, let's connect it to your ngrok [Account](https://dashboard.ngrok.com/). If you haven't already, sign up (or log in) to the ngrok Dashboard and get your Authtoken.
+
+Copy the value and run this command to add the authtoken in your terminal.
+```
+ngrok config add-authtoken TOKEN
+```
+- Start Bolt `python app.py`
+- Startk ngrok `ngrok http 3000`

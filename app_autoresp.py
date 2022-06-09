@@ -6,14 +6,25 @@ from slack_bolt.adapter.socket_mode import SocketModeHandler
 from slack_bolt.authorization import AuthorizeResult
 from slack_sdk.oauth.installation_store import FileInstallationStore, Installation
 from slack_sdk.oauth.state_store import FileOAuthStateStore
+from slack_bolt.oauth.oauth_settings import OAuthSettings
+
+configur = ConfigParser()
+configur.read('config.ini')
 
 # Issue and consume state parameter value on the server-side.
 state_store = FileOAuthStateStore(expiration_seconds=300, base_dir="./data")
 # Persist installation data and lookup it by IDs.
 installation_store = FileInstallationStore(base_dir="./data")
 
-configur = ConfigParser()
-configur.read('config.ini')
+oauth_settings = OAuthSettings(
+    client_id=configur.get("config2","SLACK_CLIENT_ID"),
+    client_secret=configur.get("config2","SLACK_CLIENT_SECRET"),
+    scopes=["chat:write.customize", "chat:write"],
+    user_scopes=["im:history", "im:read", "users:read", "users:write","chat:write"],
+    installation_store=FileInstallationStore(base_dir="./data/installations"),
+    state_store=FileOAuthStateStore(expiration_seconds=600, base_dir="./data/states")
+)
+
 
 installations = [
     {
@@ -41,15 +52,15 @@ def authorize(enterprise_id, team_id, logger):
 # Initializes your app with your bot token and socket mode handler
 app = App(
     signing_secret=configur.get("config2","SLACK_SIGNING_SECRET"),
-    authorize = authorize
+    # authorize = authorize,
+    oauth_settings=oauth_settings
 )
 # USER_TOKEN = configur.get("config2","SLACK_USER_TOKEN")
 
 # message is an event handler refer: https://api.slack.com/events ; 
 @app.event("message") 
 def respond(event, say, context, client, body ):
-    print(context)
-    USER_TOKEN = context.user_token
+    USER_TOKEN = context.user_token #sender
     sender = event["user"]
     receiver = body["authorizations"][0]["user_id"]
     # for info on methods: https://api.slack.com/methods
@@ -61,9 +72,9 @@ def respond(event, say, context, client, body ):
         user = receiver,
         token = USER_TOKEN
     )["user"]
-
     if (user_presence == "away") and (user_info["profile"]["status_text"]== "Out of Office") and (not sender == receiver):
         # message last read by receiver
+        print('Yea')
         last_read = app.client.conversations_info(
             token = USER_TOKEN, 
             channel = event["channel"]
@@ -87,6 +98,7 @@ def respond(event, say, context, client, body ):
                 break
 
         if not replied:
+            print('Not Replied')
             expiration = user_info["profile"]["status_expiration"]
             if not expiration == 0:
                 dt = datetime.datetime.fromtimestamp(expiration)
@@ -101,7 +113,7 @@ def respond(event, say, context, client, body ):
                     # username = user_info["name"],
                     # icon_url = user_info["profile"]["image_24"],
                     token = USER_TOKEN,
-                    channel = sender,
+                    channel = receiver,
                     text = text,
                 )
             except Exception as err:
@@ -126,4 +138,7 @@ def handle_user_status_changed_events(logger, event, context):
 
 # Start your app
 if __name__ == "__main__":
-    SocketModeHandler(app, configur.get("config2","SLACK_APP_TOKEN")).start()
+    # Socket Mode
+    # SocketModeHandler(app, configur.get("config2","SLACK_APP_TOKEN")).start()
+    # HTTP Mode
+    app.start(port=int(os.environ.get("PORT", 3000)))
