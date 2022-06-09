@@ -52,54 +52,55 @@ def respond(event, say, context, client, body ):
             )
             RECEIVER_TOKEN = x.user_token
         except:
-            print('failed to fetch user token')
-        # message last read by receiver
-        last_read = app.client.conversations_info(
-            token = RECEIVER_TOKEN, 
-            channel = event["channel"]
-        )["channel"]["last_read"]
-        
-        # check whether we have already replied in the current date. skip if yes
-        # after 20 texts reply again to remind we are out of office
-
-        message_list = app.client.conversations_history(
-            token = RECEIVER_TOKEN, 
-            channel = event["channel"], 
-            oldest = last_read, 
-        )["messages"]
-        replied = False
-        for idx, message in enumerate(message_list):
-            # reply for every 20 Unresponded texts
-            if idx == 19:
-                break
-            if "Out of Office" in message["text"]:
-                replied = True
-                break
-
-        if not replied:
-            expiration = user_info["profile"]["status_expiration"]
-            if not expiration == 0:
-                dt = datetime.datetime.fromtimestamp(expiration)
-                text = f"Hi, <@{ sender }>!!!\nI am Out of Office and will be back on {dt}"
-            else:
-                # add career manager instead of U032ATMNLVC or any other profile field that may exist.
-                text = f"Hi, <@{ sender }>!!!\nI'll be Out of Office for a while.\nIn case of emergency please reach out to <@U032ATMNLVC>.\nThanks"
+            print('failed to fetch receiver user token')
+        else:
+            # message last read by receiver
             try:
+                last_read = app.client.conversations_info(
+                    token = RECEIVER_TOKEN, 
+                    channel = event["channel"]
+                )["channel"]["last_read"]
                 
-                app.client.chat_postMessage(
-                    # respond with Bot
-                    # token = client.token, 
-                    # username = user_info["name"],
-                    # icon_url = user_info["profile"]["image_24"],
-                    token = RECEIVER_TOKEN,
-                    channel = sender,
-                    text = text,
-                )
+                # check whether we have already replied in the current date. skip if yes
+                # after 10 texts reply again to remind we are out of office
+
+                message_list = app.client.conversations_history(
+                    token = RECEIVER_TOKEN, 
+                    channel = event["channel"], 
+                    oldest = last_read, 
+                )["messages"]
+
+                replied = False
+                for idx, message in enumerate(message_list):
+                    # reply for every 10 Unresponded texts
+                    if idx == 9:
+                        break
+                    if "Out of Office" in message["text"]:
+                        replied = True
+                        break
+
+                if not replied:
+                    expiration = user_info["profile"]["status_expiration"]
+                    if not expiration == 0:
+                        dt = datetime.datetime.fromtimestamp(expiration)
+                        text = f"Hi, <@{ sender }>!!!\nI am Out of Office and will be back on {dt}"
+                    else:
+                        # add career manager instead of U032ATMNLVC or any other profile field that may exist.
+                        text = f"Hi, <@{ sender }>!!!\nI'll be Out of Office for a while.\nIn case of emergency please reach out to <@U032ATMNLVC>.\nThanks"
+                    app.client.chat_postMessage(
+                        # respond as Bot with Reciever Details
+                        # token = RECEIVER_TOKEN, 
+                        # username = user_info["name"],
+                        # icon_url = user_info["profile"]["image_24"],
+                        token = RECEIVER_TOKEN,
+                        channel = sender,
+                        text = text,
+                    )
+                else:
+                    print("Already Replied")
+                    pass
             except Exception as err:
                 print(err)
-        else:
-            print("Already Replied")
-            pass
 
 # When selecting Out of Office, change presence to away
 @app.event("user_status_changed")
