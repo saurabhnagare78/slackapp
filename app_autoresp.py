@@ -2,19 +2,75 @@ import os
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 import datetime
+from slack_bolt.oauth.oauth_settings import OAuthSettings
+from slack_sdk.oauth.installation_store import FileInstallationStore
+from slack_sdk.oauth.state_store import FileOAuthStateStore
+from configparser import ConfigParser
+from slack_bolt.authorization import AuthorizeResult
+
+configur = ConfigParser()
+configur.read('config.ini')
+
+installations = [
+    {
+      "team_id": "T032711JHNH",
+      "user_token": configur.get("config2","SLACK_USER_TOKEN"),
+      "user_id": "U0329TN5Y5Q",
+    },
+]
+
+def authorize(enterprise_id, team_id, logger):
+    # You can implement your own logic to fetch token here
+    for team in installations:
+        # enterprise_id doesn't exist for some teams
+        is_valid_enterprise = True if (("enterprise_id" not in team) or (enterprise_id == team["enterprise_id"])) else False
+        if ((is_valid_enterprise == True) and (team["team_id"] == team_id)):
+            # Return an instance of AuthorizeResult
+            # If you don't store bot_id and bot_user_id, could also call `from_auth_test_response` with your bot_token to automatically fetch them
+            return AuthorizeResult(
+              enterprise_id=enterprise_id,
+              team_id=team_id,
+              user_token=team["user_token"],
+              user_id=team["user_id"],
+          )
+
+
+# oauth_settings = OAuthSettings(
+#     client_id=configur.get("config2","SLACK_CLIENT_ID"),
+#     client_secret=configur.get("config2","SLACK_CLIENT_SECRET"),
+#     scopes=["chat:write.customize", "chat:write"],
+#     user_scopes=["im:history", "im:read", "users:read", "users:write"],
+#     installation_store=FileInstallationStore(base_dir="./data/installations"),
+#     state_store=FileOAuthStateStore(expiration_seconds=600, base_dir="./data/states")
+# )
 
 # Initializes your app with your bot token and socket mode handler
-app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
-USER_TOKEN = os.environ.get("SLACK_USER_TOKEN")
+app = App(
+    # token=configur.get("config2","SLACK_BOT_TOKEN"),
+    signing_secret=configur.get("config2","SLACK_SIGNING_SECRET"),
+    # oauth_settings=oauth_settings,
+    authorize = authorize
+)
+USER_TOKEN = configur.get("config2","SLACK_USER_TOKEN")
 
-# message is an event handler refer: https://api.slack.com/events
+# message is an event handler refer: https://api.slack.com/events ; 
 @app.event("message") 
 def respond(event, say, context, client, body ):
+    print(context)
+    USER_TOKEN = context.user_token
     sender = event["user"]
     receiver = body["authorizations"][0]["user_id"]
     # add event if status set to out of office set presence as away
-    user_presence = app.client.users_getPresence(user = receiver)["presence"]
-    user_info = app.client.users_info(user = receiver)["user"]
+    # for info on methods: https://api.slack.com/methods
+    user_presence = app.client.users_getPresence(
+        user = receiver, 
+        token = USER_TOKEN
+    )["presence"]
+    user_info = app.client.users_info(
+        user = receiver,
+        token = USER_TOKEN
+    )["user"]
+
     if (user_presence == "away") and (user_info["profile"]["status_text"]== "Out of Office") and (not sender == receiver):
         # message last read by receiver
         last_read = app.client.conversations_info(
@@ -65,15 +121,18 @@ def respond(event, say, context, client, body ):
 
 # When selecting Out of Office, change presence to away
 @app.event("user_status_changed")
-def handle_user_status_changed_events(body, logger, event):
+def handle_user_status_changed_events(logger, event, context):
     status = event["user"]["profile"]["status_text"]
     try:
         if status == "Out of Office":
-            print(app.client.users_setPresence(token = USER_TOKEN,presence = "away"))
+            app.client.users_setPresence(
+                token = context.user_token,
+                presence = "away"
+                )
     except Exception as err:
         print(err)
 
 
 # Start your app
 if __name__ == "__main__":
-    SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()
+    SocketModeHandler(app, configur.get("config2","SLACK_APP_TOKEN")).start()
