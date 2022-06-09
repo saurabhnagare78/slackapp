@@ -11,11 +11,6 @@ from slack_bolt.oauth.oauth_settings import OAuthSettings
 configur = ConfigParser()
 configur.read('config.ini')
 
-# Issue and consume state parameter value on the server-side.
-state_store = FileOAuthStateStore(expiration_seconds=300, base_dir="./data")
-# Persist installation data and lookup it by IDs.
-installation_store = FileInstallationStore(base_dir="./data")
-
 oauth_settings = OAuthSettings(
     client_id=configur.get("config2","SLACK_CLIENT_ID"),
     client_secret=configur.get("config2","SLACK_CLIENT_SECRET"),
@@ -25,37 +20,11 @@ oauth_settings = OAuthSettings(
     state_store=FileOAuthStateStore(expiration_seconds=600, base_dir="./data/states")
 )
 
-
-installations = [
-    {
-      "team_id": "T032711JHNH",
-      "user_token": configur.get("config2","SLACK_USER_TOKEN"),
-      "user_id": "U0329TN5Y5Q",
-    },
-]
-
-def authorize(enterprise_id, team_id, logger):
-    # You can implement your own logic to fetch token here
-    for team in installations:
-        # enterprise_id doesn't exist for some teams
-        is_valid_enterprise = True if (("enterprise_id" not in team) or (enterprise_id == team["enterprise_id"])) else False
-        if ((is_valid_enterprise == True) and (team["team_id"] == team_id)):
-            # Return an instance of AuthorizeResult
-            # If you don't store bot_id and bot_user_id, could also call `from_auth_test_response` with your bot_token to automatically fetch them
-            return AuthorizeResult(
-              enterprise_id=enterprise_id,
-              team_id=team_id,
-              user_token=team["user_token"],
-              user_id=team["user_id"],
-            )
-
 # Initializes your app with your bot token and socket mode handler
 app = App(
     signing_secret=configur.get("config2","SLACK_SIGNING_SECRET"),
-    # authorize = authorize,
     oauth_settings=oauth_settings
 )
-# USER_TOKEN = configur.get("config2","SLACK_USER_TOKEN")
 
 # message is an event handler refer: https://api.slack.com/events ; 
 @app.event("message") 
