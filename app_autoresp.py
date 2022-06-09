@@ -4,6 +4,13 @@ from configparser import ConfigParser
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from slack_bolt.authorization import AuthorizeResult
+from slack_sdk.oauth.installation_store import FileInstallationStore, Installation
+from slack_sdk.oauth.state_store import FileOAuthStateStore
+
+# Issue and consume state parameter value on the server-side.
+state_store = FileOAuthStateStore(expiration_seconds=300, base_dir="./data")
+# Persist installation data and lookup it by IDs.
+installation_store = FileInstallationStore(base_dir="./data")
 
 configur = ConfigParser()
 configur.read('config.ini')
