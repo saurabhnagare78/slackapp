@@ -169,7 +169,7 @@ ngrok config add-authtoken TOKEN
 # config.ini
 [jira]
 JIRA_TOKEN = YOUR_TOKEN
-JIRA_URL = https://caxefaizan.atlassian.net/rest/api/2/issue/
+JIRA_URL = YOUR_JIRA_URL/rest/api/2/issue/
 JIRA_USERNAME = YOUR_JIRA_USERNAME
 ```
 Create a New Project (HR). It reflects in `app.py`
