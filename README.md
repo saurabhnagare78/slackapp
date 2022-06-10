@@ -33,6 +33,7 @@ python3 -m pip install -r requirements.txt
 ## Tokens and Installing apps
 > For HTTP Mode we will have to add `Redirect URLs` as well`.
 
+Visit [here](https://api.slack.com/apps) to manage your apps.
 Slack apps use OAuth to manage access to Slack’s APIs. When an app is installed, you’ll receive a token that the app can use to call API methods.
 
 - Navigate to the OAuth & Permissions on the left sidebar and scroll down to the Bot Token Scopes section. Click Add an OAuth Scope.
