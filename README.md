@@ -122,46 +122,6 @@ if __name__ == "__main__":
 
     To include new issue categories for existing or newly created department, add them in their respective `DEPARTMENTNAME_categories.txt` file on a separate line.
 
-## Auto Out Of Office Replies
-To use this feature set your status as `Out of Office`.
-The App will generate a response on your behalf as:
-```    
-Hi, User!!!
-I am Out of Office and will be back on 2022-06-08 14:42:10
-```
-The time is calculated based on your Status Expiration time.
-But if the clear date is not provided our response would be
-```
-Hi, User!!!
-I'll be Out of Office for a while. In case of emergency please reach out to <YOUR_CAREER_MANAGER>. Thanks
-```
-> The App autoreplies once every 20 unresponded messages per channel during the day.   
-
-## We're all set!!!
-Run the app `python3 app.py`
-
-# HTTP Mode (Disable Socket Mode)
-## Install ngrok
-```
-curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | \
-      sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && \
-      echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | \
-      sudo tee /etc/apt/sources.list.d/ngrok.list && \
-      sudo apt update && sudo apt install ngrok
-```
-## Connect your agent to your ngrok account
-Now that the ngrok agent is installed, let's connect it to your ngrok [Account](https://dashboard.ngrok.com/). If you haven't already, sign up (or log in) to the ngrok Dashboard and get your Authtoken.
-
-Copy the value and run this command to add the authtoken in your terminal.
-```
-ngrok config add-authtoken TOKEN
-```
-- Start Bolt `python app.py`
-- Startk ngrok `ngrok http 3000`
-- Append the forarding link with /slack/install
-    - eg. `https://46db-49-36-200-218.ngrok.io/slack/install`
-    - Authorize the installation and you are good to go.
-
 ## JIRA Setup
 - Login to your Jira Account
 - Go to your account settings > Security > API Tokens > Create and Manage Tokens > Create Api Token > Copy it and store it in your `config.ini` file. (You wont be able to see it again)
@@ -193,16 +153,57 @@ ticket_data = {
 <p align="center">
     <img src="./images/jira.png"/>
 </p>
-
 - Apps > Slack Integration
 <p align="center">
     <img src="./images/jira2.png"/>
 </p>
 
+## Auto Out Of Office Replies
+To use this feature set your status as `Out of Office`.
+The App will generate a response on your behalf as:
+```    
+Hi, User!!!
+I am Out of Office and will be back on 2022-06-08 14:42:10
+```
+The time is calculated based on your Status Expiration time.
+But if the clear date is not provided our response would be
+```
+Hi, User!!!
+I'll be Out of Office for a while. In case of emergency please reach out to <YOUR_CAREER_MANAGER>. Thanks
+```
+> The App autoreplies once every 20 unresponded messages per channel during the day.   
+
+## We're all set!!!
+Run the app `python3 app.py` for Help Desk
+Run the app `python3 app_autoresp.py` for Auto Replies
+These can be merged as well.
+
+# HTTP Mode (Disable Socket Mode)
+## Install ngrok
+```
+curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | \
+      sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && \
+      echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | \
+      sudo tee /etc/apt/sources.list.d/ngrok.list && \
+      sudo apt update && sudo apt install ngrok
+```
+## Connect your agent to your ngrok account
+Now that the ngrok agent is installed, let's connect it to your ngrok [Account](https://dashboard.ngrok.com/). If you haven't already, sign up (or log in) to the ngrok Dashboard and get your Authtoken.
+
+Copy the value and run this command to add the authtoken in your terminal.
+```
+ngrok config add-authtoken TOKEN
+```
+- Start Bolt `python app.py`
+- Startk ngrok `ngrok http 3000`
+- Append the forwarding link with /slack/install
+    - eg. `https://46db-49-36-200-218.ngrok.io/slack/install`
+    - Authorize the installation and you are good to go.
+
 # Production
 Once everything is tested and you want to deploy the app on your domain, deploy it on a flask app using WSGI.
 
-    python3 -m pip install flask requests
+    python3 -m pip flask requests gunicorn
 
 ## Creating a Flask Application to Run Your Slackapp
 First adjust your firewall settings to allow traffic through port 3000:
@@ -267,7 +268,6 @@ if __name__ == "__main__":
 Check that Gunicorn can serve the application correctly.
 ```
 cd ~/slackapp
-python3 -m pip install gunicorn
 gunicorn --bind 0.0.0.0:3000 wsgi:flask_app
 ```
 
