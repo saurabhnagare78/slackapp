@@ -121,4 +121,5 @@ if __name__ == "__main__":
     ## Socket Mode
     # SocketModeHandler(app, configur.get("config2","SLACK_APP_TOKEN")).start()
     ## HTTP Mode
+    # Starts a web server for local development.
     app.start(port=int(os.environ.get("PORT", 3000)))

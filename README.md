@@ -198,3 +198,170 @@ ticket_data = {
 <p align="center">
     <img src="./images/jira2.png"/>
 </p>
+
+# Production
+Once everything is tested and you want to deploy the app on your domain, deploy it on a flask app using WSGI.
+
+## Creating a Flask Application to Run Your Slackapp
+First adjust your firewall settings to allow traffic through port 3000:
+
+    sudo ufw allow 3000
+
+Now check the status of ufw:
+    
+    sudo ufw status
+Now create the file for your Flask app. Name this file server.py:
+
+    touch server.py
+Now add the following import statements. 
+```
+# app.py contd.
+
+from flask import Flask, request
+from slack_bolt.adapter.flask import SlackRequestHandler
+
+flask_app = Flask(__name__)
+handler = SlackRequestHandler(app)
+
+@flask_app.route("/slack/events", methods=["POST"])
+def slack_events():
+    return handler.handle(request)
+
+@flask_app.route("/slack/install", methods=["GET"])
+def install():
+    return handler.handle(request)
+
+@flask_app.route("/slack/oauth_redirect", methods=["GET"])
+def oauth_redirect():
+    return handler.handle(request)
+```
+Finally, create a main section that will launch the app on your external IP address on port 3000. 
+```
+if __name__ == "__main__":
+    # Run your app on your externally facing IP address on port 3000 instead of
+    # running it on localhost, which is traditional for development.
+    flask_app.run(host='0.0.0.0', port=3000)
+```
+## Running Your Flask App
+Configure your Slack App to use your server's ip address.
+
+- Click on Event Subscriptions in the UI sidebar.
+- Once you’ve done that, type in your IP address, port, and `/slack/events` endpoint into the Request URL field. Don’t forget the HTTP protocol prefix. Slack will make an attempt to connect to your endpoint. Once it has successfully done so you’ll see a green check mark with the word Verified next to it.
+<p align="center">
+    <img src="./images/requesturl.png"/>
+</p>
+
+Once you are done developing your application and you are ready to move it to production, you’ll need to deploy it to a server. This is necessary because the Flask development server is not a secure production environment. You’ll be better served if you deploy your app using a WSGI
+
+## Creating the WSGI Entry Point
+Next, let’s create a file that will serve as the entry point for our application. This will tell our Gunicorn server how to interact with the application.
+
+Let’s call the file wsgi.py:
+```
+from server import flask_app
+
+if __name__ == "__main__":
+    flask_app.run()
+```
+## Configuring Gunicorn
+
+Check that Gunicorn can serve the application correctly.
+```
+cd ~/slackapp
+python3 -m pip install gunicorn
+gunicorn --bind 0.0.0.0:5000 wsgi:flask_app
+```
+
+Next, let’s create the systemd service unit file. Creating a systemd unit file will allow Ubuntu’s init system to automatically start Gunicorn and serve the Flask application whenever the server boots.
+
+Create a unit file ending in .service within the /etc/systemd/system directory to begin:
+```
+# /etc/systemd/system/slackserver.service
+[Unit]
+Description=Gunicorn instance to serve slackapp
+After=network.target
+[Service]
+User=caxe
+Group=www-data
+WorkingDirectory=/home/caxe/slackapp
+Environment="PATH=/home/caxe/slackapp/venv/bin"
+ExecStart=/home/caxe/slackapp/venv/bin/gunicorn --workers 3 --bind unix:slackapp.sock -m 007 wsgi:flask_app
+#  We’ll set an umask value of 007 so that the socket file is created giving access to the owner and group, while restricting other access
+[Install]
+WantedBy=multi-user.target
+```
+sudo systemctl start slackapp
+sudo systemctl enable slackapp
+sudo systemctl status slackapp
+## Configuring Nginx to Proxy Requests
+Let’s now configure Nginx to pass web requests to that socket by making some small additions to its configuration file.
+
+Begin by creating a new server block configuration file in Nginx’s sites-available directory. Let’s call this slackapp to keep in line with the rest of the guide:
+```
+# /etc/nginx/sites-available/slackapp
+server {
+    listen 80;
+    server_name your_domain www.your_domain;
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/home/caxe/slackapp/slackapp.sock;
+    }
+}
+```
+To enable the Nginx server block configuration you’ve just created, link the file to the sites-enabled directory:
+```
+sudo ln -s /etc/nginx/sites-available/slackapp /etc/nginx/sites-enabled
+sudo nginx -t
+sudo systemctl restart nginx
+```
+Finally, let’s adjust the firewall again. We no longer need access through port 3000, so we can remove that rule. We can then allow full access to the Nginx server:
+```
+sudo ufw delete allow 3000
+sudo ufw allow 'Nginx Full'
+```
+>If you encounter any errors, trying checking the following:
+>```
+>sudo less /var/log/nginx/error.log: checks the Nginx error logs.
+>sudo less /var/log/nginx/access.log: checks the Nginx access logs.
+>sudo journalctl -u nginx: checks the Nginx process logs.
+>sudo journalctl -u slackapp: checks your Flask app’s Gunicorn logs.
+## Securing the Application
+To ensure that traffic to your server remains secure, get the SSL certificate for your domain.
+
+We will assume the following things:
+- The private key, SSL certificate, and, if applicable, the CA’s intermediate certificates are located in a home directory at /home/caxe
+- The private key is called example.com.key
+- The SSL certificate is called example.com.crt
+- The CA intermediate certificate(s) are in a file called intermediate.crt
+- If you have a firewall enabled, be sure that it allows port 443 (HTTPS)
+> Note: In a real environment, these files should be stored somewhere that only the user that runs the web server master process (usually root) can access. The private key should be kept secure.
+
+With Nginx, if your CA included an intermediate certificate, you must create a single “chained” certificate file that contains your certificate and the CA’s intermediate certificates.
+
+- Change to the directory that contains your private key, certificate, and the CA intermediate certificates (in the intermediate.crt file). We will assume that they are in your home directory for the example:
+
+```
+cd ~
+cat example.com.crt intermediate.crt > example.com.chained.crt
+cd /etc/nginx/sites-enabled
+sudo vi default
+# Find and modify the following fields
+    listen 443 ssl;
+    server_name example.com;
+    ssl_certificate /home/sammy/example.com.chained.crt;
+    ssl_certificate_key /home/sammy/example.com.key;
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    ssl_prefer_server_ciphers on;
+    ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
+```
+If you want HTTP traffic to redirect to HTTPS, you can add this additional server block at the top of the file (replace the highlighted parts with your own information):
+```
+server {
+    listen 80;
+    server_name example.com;
+    rewrite ^/(.*) https://example.com/$1 permanent;
+}
+```
+Now restart Nginx to load the new configuration and enable TLS/SSL over HTTPS!
+
+    sudo service nginx restart
