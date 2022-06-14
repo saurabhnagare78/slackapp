@@ -196,7 +196,9 @@ ngrok config add-authtoken TOKEN
 ```
 - Start Bolt `python app.py`
 - Startk ngrok `ngrok http 3000`
-- Append the forwarding link with /slack/install
+- Configure your Slack App to use your server's ip address.
+    - Click on Event Subscriptions in the UI sidebar.
+    - Once you’ve done that, Append the forwarding link of ngrok with /slack/install
     - eg. `https://46db-49-36-200-218.ngrok.io/slack/install`
     - Authorize the installation and you are good to go.
 
