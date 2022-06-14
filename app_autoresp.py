@@ -115,7 +115,7 @@ def handle_user_status_changed_events(logger, event, context):
     except Exception as err:
         print(err)
 
-
+## Comment out when creating flask app
 # Start your app
 if __name__ == "__main__":
     ## Socket Mode
