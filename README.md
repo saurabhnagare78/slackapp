@@ -202,7 +202,7 @@ ticket_data = {
 # Production
 Once everything is tested and you want to deploy the app on your domain, deploy it on a flask app using WSGI.
 
-    python3 -m pip install flask
+    python3 -m pip install flask requests
 
 ## Creating a Flask Application to Run Your Slackapp
 First adjust your firewall settings to allow traffic through port 3000:
