@@ -212,9 +212,6 @@ First adjust your firewall settings to allow traffic through port 3000:
 Now check the status of ufw:
     
     sudo ufw status
-Now create the file for your Flask app. Name this file server.py:
-
-    touch server.py
 Now add the following import statements. 
 ```
 # app.py contd.
@@ -260,7 +257,7 @@ Next, let’s create a file that will serve as the entry point for our applicati
 
 Let’s call the file wsgi.py:
 ```
-from server import flask_app
+from app import flask_app
 
 if __name__ == "__main__":
     flask_app.run()
@@ -350,8 +347,8 @@ sudo vi default
 # Find and modify the following fields
     listen 443 ssl;
     server_name example.com;
-    ssl_certificate /home/sammy/example.com.chained.crt;
-    ssl_certificate_key /home/sammy/example.com.key;
+    ssl_certificate /home/caxe/example.com.chained.crt;
+    ssl_certificate_key /home/caxe/example.com.key;
     ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
     ssl_prefer_server_ciphers on;
     ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
