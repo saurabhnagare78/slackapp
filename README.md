@@ -335,7 +335,7 @@ We will assume the following things:
 - If you have a firewall enabled, be sure that it allows port 443 (HTTPS)
 > Note: In a real environment, these files should be stored somewhere that only the user that runs the web server master process (usually root) can access. The private key should be kept secure.
 
-With Nginx, if your CA included an intermediate certificate, you must create a single “chained” certificate file that contains your certificate and the CA’s intermediate certificates.
+With Nginx, if your CA included an intermediate certificate, you must create a single "chained" certificate file that contains your certificate and the CA’s intermediate certificates.
 
 - Change to the directory that contains your private key, certificate, and the CA intermediate certificates (in the intermediate.crt file). We will assume that they are in your home directory for the example:
 
