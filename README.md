@@ -268,12 +268,12 @@ Check that Gunicorn can serve the application correctly.
 ```
 cd ~/slackapp
 python3 -m pip install gunicorn
-gunicorn --bind 0.0.0.0:5000 wsgi:flask_app
+gunicorn --bind 0.0.0.0:3000 wsgi:flask_app
 ```
 
 Next, let’s create the systemd service unit file. Creating a systemd unit file will allow Ubuntu’s init system to automatically start Gunicorn and serve the Flask application whenever the server boots.
 
-Create a unit file ending in .service within the /etc/systemd/system directory to begin:
+Create a unit file ending in `.service` within the /etc/systemd/system directory to begin:
 ```
 # /etc/systemd/system/slackserver.service
 [Unit]
