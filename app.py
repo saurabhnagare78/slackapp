@@ -16,15 +16,16 @@ JIRA_USERNAME = configur.get("jira","JIRA_USERNAME")
 
 data = {}
 with open('departments.txt', 'r') as fp:
-    depts = fp.read().splitlines()
+    depts = fp.read().splitlines() # ['H.R', 'I.T', 'Accounts']
 for dept in depts:
     data[dept] = ''
-for file_name in data.keys():
+for file_name in depts:
     with open(f'{file_name}_categories.txt', 'r') as fp:
         catgs = fp.read().splitlines()
-        data[file_name] = catgs
+        data[file_name] = catgs # {'H.R': ['Leaves', 'Holidays', 'Background Verification'], 'I.T': ['Software Install', 'Network Access', 'Locked Out'], 'Accounts': ['Payslips', 'Form 16', 'PF Withdrawal']}
+
 options_1 = []
-for option in data.keys():
+for option in depts:
     options_1.append(
         {
             "text": {
@@ -36,6 +37,63 @@ for option in data.keys():
         } 
     )
 
+def app_description_block()
+    data  = {
+                    "type": "section",
+                    "block_id": "app_description",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "Your Personal Help Desk",
+                        "emoji": True
+                    }
+                }
+    return data
+
+def dept_selection_block(text1, text2):
+    global options_1
+    data = {
+            "type": "section",
+            "block_id": "dept_selection",
+            "text": {
+                "type": "mrkdwn",
+                "text": text1
+            },
+            "accessory": {
+                "type": "static_select",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": text2,
+                    "emoji": True
+                },
+                "options": options_1,
+                "action_id": "dept_selection"
+            }
+        }
+    return data
+
+def dept_category_selection_block(text1, text2)
+    global options_2
+    data = {
+        "type": "section",
+        "block_id": "dept_category_selection",
+        "text": {
+            "type": "mrkdwn",
+            "text": text1
+        },
+        "accessory": {
+            "type": "static_select",
+            "placeholder": {
+                "type": "plain_text",
+                "text": text2,
+                "emoji": True
+            },
+            "options": options_2,
+            "action_id": "dept_category_selection"
+        }
+    }
+    return data
+
+# First Page
 @app.shortcut("caxe_app_shortcut")
 def open_modal(ack, shortcut, client):
     # Acknowledge the shortcut request
@@ -51,37 +109,12 @@ def open_modal(ack, shortcut, client):
             "close": {"type": "plain_text", "text": "Close"},
             # "submit": {"type": "plain_text", "text": "Submit"},
             "blocks": [
-                {
-                    "type": "section",
-                    "block_id": "app_description",
-                    "text": {
-                        "type": "plain_text",
-                        "text": "Your Personal Help Desk",
-                        "emoji": True
-                    }
-                },
-                {
-                    "type": "section",
-                    "block_id": "dept_selection",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "Select the Relevant Department"
-                    },
-                    "accessory": {
-                        "type": "static_select",
-                        "placeholder": {
-                            "type": "plain_text",
-                            "text": "Select an item",
-                            "emoji": True
-                        },
-                        "options": options_1,
-                        "action_id": "dept_selection"
-                    }
-                }
+                app_description_block(),
+                dept_selection_block("Select the Relevant Department", "Select an item")
             ]
         }
     )
-
+# Second Page
 @app.action("dept_selection")
 def update_modal(ack, body, client):
     ack()
@@ -110,55 +143,20 @@ def update_modal(ack, body, client):
             "callback_id": "dept_category_selection",
             "title": {"type": "plain_text", "text": "Updated modal"},
             "blocks": [
-                {
-                    "type": "section",
-                    "block_id": "app_description",
-                    "text": {
-                        "type": "plain_text",
-                        "text": "Your Personal Help Desk",
-                        "emoji": True
-                    }
-                },
-                {
-                    "type": "section",
-                    "block_id": "dept_selection",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "Selected Department"
-                    },
-                    "accessory": {
-                        "type": "static_select",
-                        "placeholder": {
-                            "type": "plain_text",
-                            "text": f"{ body['actions'][0]['selected_option']['text']['text']}",
-                            "emoji": True
-                        },
-                        "options": options_1,
-                        "action_id": "dept_selection"
-                    }
-                },
-                {
-                    "type": "section",
-                    "block_id": "dept_category_selection",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "Select the Issue Category"
-                    },
-                    "accessory": {
-                        "type": "static_select",
-                        "placeholder": {
-                            "type": "plain_text",
-                            "text": "Select an item",
-                            "emoji": True
-                        },
-                        "options": options_2,
-                        "action_id": "dept_category_selection"
-                    }
-                }
+                app_description_block(),
+                dept_selection_block(
+                    "Selected Department", 
+                    f"{ body['actions'][0]['selected_option']['text']['text']}"
+                ),
+                dept_category_selection_block(
+                    "Select the Issue Category",
+                    "Select an item"
+                ),
             ]
         }
     )
 
+# Third Page
 @app.action("dept_category_selection")
 def update_modal(ack, body, client):
     ack()
@@ -176,51 +174,15 @@ def update_modal(ack, body, client):
             "close": {"type": "plain_text", "text": "Close"},
             "submit": {"type": "plain_text", "text": "Submit"},
             "blocks": [
-                {
-                    "type": "section",
-                    "block_id": "app_description",
-                    "text": {
-                        "type": "plain_text",
-                        "text": "Your Personal Help Desk",
-                        "emoji": True
-                    }
-                },
-                {
-                    "type": "section",
-                    "block_id": "dept_selection",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "Selected Department"
-                    },
-                    "accessory": {
-                        "type": "static_select",
-                        "placeholder": {
-                            "type": "plain_text",
-                            "text": f"{ body['view']['blocks'][1]['accessory']['placeholder']['text']}",
-                            "emoji": True
-                        },
-                        "options": options_1,
-                        "action_id": "dept_selection"
-                    }
-                },
-                {
-                    "type": "section",
-                    "block_id": "dept_category_selection",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "Selected Issue Category "
-                    },
-                    "accessory": {
-                        "type": "static_select",
-                        "placeholder": {
-                            "type": "plain_text",
-                            "text": f"{ body['actions'][0]['selected_option']['text']['text'] }",
-                            "emoji": True
-                        },
-                        "options": options_2,
-                        "action_id": "dept_category_selection"
-                    }
-                },
+                app_description_block(),
+                dept_selection_block(
+                    "Selected Department",
+                    f"{ body['view']['blocks'][1]['accessory']['placeholder']['text']}"
+                ),
+                dept_category_selection_block(
+                    "Selected Issue Category",
+                    f"{ body['actions'][0]['selected_option']['text']['text'] }"
+                ),
                 {
                     "type": "input",
                     "block_id": "issue_description",
