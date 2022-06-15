@@ -93,7 +93,7 @@ def dept_category_selection_block(text1, text2):
 def open_modal(ack, shortcut, client):
     # Acknowledge the shortcut request
     ack()
-    # Call the views_open method using the built-in WebClient
+    # Call the views_open method using the built-in WebClient https://api.slack.com/reference/surfaces/views
     client.views_open(
         trigger_id=shortcut["trigger_id"],
         # A simple view payload for a modal
@@ -103,6 +103,7 @@ def open_modal(ack, shortcut, client):
             "title": {"type": "plain_text", "text": "Stealth Mode"},
             "close": {"type": "plain_text", "text": "Close"},
             # "submit": {"type": "plain_text", "text": "Submit"},
+            # https://app.slack.com/block-kit-builder
             "blocks": [
                 app_description_block(),
                 dept_selection_block("Select the Relevant Department", "Select an item")
@@ -203,11 +204,11 @@ def action_button_click(body, ack, say, view):
     ack()
     # hopes_and_dreams = view["state"]["values"]["input_c"]["dreamy_input"]
     print('Creating Ticket')
-
+    # https://developer.atlassian.com/server/jira/platform/jira-rest-api-examples/
     ticket_data = {
         "fields": {
             "project": {
-                "key": "TEST"
+                "key": "TEST" # Same as existing JIRA Project
             },
             "summary": f"{body['view']['state']['values']['dept_category_selection']['dept_category_selection']['selected_option']['text']['text']}",
             "description": f"Issue created by: <@{body['user']['id']}>\nhttps://{body['team']['domain']}.slack.com/team/{body['user']['id']}\nDetails:\n{ body['view']['state']['values']['issue_description']['plain_text_input-action']['value'] }",
