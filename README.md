@@ -247,7 +247,7 @@ if __name__ == "__main__":
 ## Running Your Flask App
 Configure your Slack App to use your server's ip address.
 
-- Click on Event Subscriptions in the UI sidebar.
+- Click on Event Subscriptions in the UI sidebar. Link to [apps](https://api.slack.com/apps).
 - Once you’ve done that, type in your IP address, port, and `/slack/events` endpoint into the Request URL field. Don’t forget the HTTP protocol prefix. Slack will make an attempt to connect to your endpoint. Once it has successfully done so you’ll see a green check mark with the word Verified next to it.
 <p align="center">
     <img src="./images/requesturl.png"/>

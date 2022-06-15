@@ -3,3 +3,6 @@ config.ini
 data
 test.py
 response.py
+__pycache__
+copy_app_autoresp.py
+wsgi.py
