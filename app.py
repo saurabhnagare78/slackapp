@@ -37,7 +37,20 @@ for option in depts:
         } 
     )
 
-def app_description_block()
+def accessory_field(text, options, action):
+    data = {
+        "type": "static_select",
+        "placeholder": {
+            "type": "plain_text",
+            "text": text,
+            "emoji": True
+        },
+        "options": options,
+        "action_id": action
+    }
+    return data
+
+def app_description_block():
     data  = {
                     "type": "section",
                     "block_id": "app_description",
@@ -58,20 +71,11 @@ def dept_selection_block(text1, text2):
                 "type": "mrkdwn",
                 "text": text1
             },
-            "accessory": {
-                "type": "static_select",
-                "placeholder": {
-                    "type": "plain_text",
-                    "text": text2,
-                    "emoji": True
-                },
-                "options": options_1,
-                "action_id": "dept_selection"
-            }
+            "accessory": accessory_field(text2, options_1, "dept_selection")
         }
     return data
 
-def dept_category_selection_block(text1, text2)
+def dept_category_selection_block(text1, text2):
     global options_2
     data = {
         "type": "section",
@@ -80,16 +84,7 @@ def dept_category_selection_block(text1, text2)
             "type": "mrkdwn",
             "text": text1
         },
-        "accessory": {
-            "type": "static_select",
-            "placeholder": {
-                "type": "plain_text",
-                "text": text2,
-                "emoji": True
-            },
-            "options": options_2,
-            "action_id": "dept_category_selection"
-        }
+        "accessory": accessory_field(text2, options_2, "dept_category_selection")
     }
     return data
 
