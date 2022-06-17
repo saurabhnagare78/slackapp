@@ -8,16 +8,12 @@ from configparser import ConfigParser
 
 configur = ConfigParser()
 configur.read('config.ini')
+master_data = {}
 
 app = App(token=configur.get("config","SLACK_BOT_TOKEN"))
 JIRA_TOKEN = configur.get("jira","JIRA_TOKEN")
 JIRA_URL = configur.get("jira","JIRA_URL")
 JIRA_USERNAME = configur.get("jira","JIRA_USERNAME")
-
-######################################################################################
-######################################################################################
-
-
 
 def create_field(text, value):
     '''
@@ -55,7 +51,7 @@ def create_options(vals_list):
             }
         )
     return options
-master_data = {}
+
 def generate_master_dict():
     '''
     Generates the departments list with their categories for use as options from file `departments.txt`
@@ -75,7 +71,9 @@ def generate_master_dict():
             master_data[dept_name]['categories'].append(create_field(category, f'{dept_name}_category_{category}'))
     print('Master Data\n',master_data)
     print('*'*150)
+
 generate_master_dict()
+
 # blocks with action_id calls `@app.action` decorator with the defined name
 # eg. "action_id": 'demo_action' will execute @app.action('demo_action')
 def create_block(text1, options = None, action = None, initial_option = None, text2 = None, type1 = None, block_id = None, type2 = 'section'):
@@ -128,19 +126,6 @@ def create_block(text1, options = None, action = None, initial_option = None, te
         data['block_id'] = block_id
     return data
 
-######################################################################################
-######################################################################################
-
-data = {}
-with open('departments.txt', 'r') as fp:
-    depts = fp.read().splitlines() # ['H.R', 'I.T', 'Accounts']
-for dept in depts:
-    data[dept] = ''
-for file_name in depts:
-    with open(f'{file_name}_categories.txt', 'r') as fp:
-        catgs = fp.read().splitlines()
-        data[file_name] = catgs # {'H.R': ['Leaves', 'Holidays', 'Background Verification'], 'I.T': ['Software Install', 'Network Access', 'Locked Out'], 'Accounts': ['Payslips', 'Form 16', 'PF Withdrawal']}
-
 def departments_list():
     global master_data
     data = []
@@ -148,77 +133,8 @@ def departments_list():
         data.append(val['name'])
     return data
 
-def block_description(block_id, text):
-    data = {
-        "type": "section",
-        "block_id": block_id,
-        "text": {
-            "type": "mrkdwn",
-            "text": text,
-        }
-    }
-    return data
-
-def app_description_block():
-    data  = block_description("app_description", "Your Personal Help Desk")
-    return data
-
-def drop_accessory_field(text, options, action):
-    '''
-    dispalys the options in drop down and redirects to specified `app.action()`
-    '''
-    data = {
-        "type": "static_select",
-        "placeholder": {
-            "type": "plain_text",
-            "text": text,
-            "emoji": True
-        },
-        "options": options,
-        "action_id": action
-    }
-    return data
-
-
-def dept_selection_block2(text1, text2):
-    # displays all the departments in a dropdown menu
-    global departments_list
-    data = {
-        "type": "section",
-        "block_id": 'input_category',
-        "text": {
-            "type": "mrkdwn",
-            "text": text1,
-        }
-    }
-    data["accessory"] = {
-        "type": "static_select",
-        "placeholder": {
-            "type": "plain_text",
-            "text": text2,
-            "emoji": True
-        },
-        "options": departments_list,
-        "action_id": 'input_category'
-    }
-    return data
-
-
-def dept_selection_block(text1, text2):
-    global departments_list
-    data = block_description("dept_selection", text1)
-    data["accessory"] = drop_accessory_field(text2, departments_list, "dept_selection")
-    return data
-
-def dept_category_selection_block(text1, text2):
-    # displays all the department's issue categories in a dropdown menu
-    global options_2
-    data = block_description("dept_category_selection", text1)
-    data["accessory"] = drop_accessory_field(text2, options_2, "dept_category_selection")
-    return data
-
 @app.shortcut("admin_caxe")
-def open_modal(ack, body, logger, shortcut, client):
+def open_modal(ack, body, shortcut, client):
     ack()
     x = app.client.users_info(
         token = configur.get("config","SLACK_BOT_TOKEN"),
@@ -273,6 +189,7 @@ def open_modal(ack, body, logger, shortcut, client):
             ]
         }
         )
+
 @app.action("add_update_radio_buttons_action")
 def update_modal(ack, body, client):
     ack()
@@ -284,7 +201,7 @@ def update_modal(ack, body, client):
                         text2 = "Select an item",
                         block_id = 'dept_list_drop_down_block',
                         type1 = 'static_select',
-                        action = 'dept_drop_down_action',
+                        action = 'admin_dept_drop_down_action',
                         options = departments_list(),
                     ))
     choice = body['actions'][0]['selected_option']['value']
@@ -299,7 +216,7 @@ def update_modal(ack, body, client):
                 "type": "modal",
                 # View identifier
                 "callback_id": "dept_category_selection2",
-                "title": {"type": "plain_text", "text": "Updated modal"},
+                "title": {"type": "plain_text", "text": "Stealth Mode"},
                 "blocks": prev_blocks
             }
         )
@@ -307,13 +224,11 @@ def update_modal(ack, body, client):
         pass
 
 @app.view("update_files")
-def handle_view_events(client,ack, body, logger):
+def handle_view_events(client,ack, body):
     ack()
-    print(body)
     print('category_input_submitted_successfully')
     if body['view']['state']['values']['add_delete_category_block']['add_delete_category_action']['selected_option']['value'] == 'del_cat':
-        print('Delete Category Pending Call Successful also update master data')
-        dept = body['view']['state']['values']['dept_list_drop_down_block']['dept_drop_down_action']['selected_option']['text']['text']
+        dept = body['view']['state']['values']['dept_list_drop_down_block']['admin_dept_drop_down_action']['selected_option']['text']['text']
         catg = body['view']['state']['values']['dept_category_list_drop_down_block']['dept_category_list_drop_down_action']['selected_option']['text']['text']
         with open(f'{dept}_categories.txt','r') as fp:
             catgs = fp.read().splitlines()
@@ -326,14 +241,14 @@ def handle_view_events(client,ack, body, logger):
     else:
         catgs = body['view']['state']['values']['enter_category_text_block']['plain_text_input_action']['value']
         catgs = catgs.split(',')
-        dept = body['view']['state']['values']['dept_list_drop_down_block']['dept_drop_down_action']['selected_option']['text']['text']
+        dept = body['view']['state']['values']['dept_list_drop_down_block']['admin_dept_drop_down_action']['selected_option']['text']['text']
         with open(f'{dept}_categories.txt','a') as fp:
             for cat in catgs:
                 if len(cat) > 0:
                     fp.write(cat+'\n')
         message = 'Category added Successfully!!!'
         generate_master_dict()
-        print('Category added Successfully!also update master data')
+        print('Category added Successfully!')
     client.views_open(
         trigger_id=body["trigger_id"],
         # A simple view payload for a modal
@@ -348,20 +263,13 @@ def handle_view_events(client,ack, body, logger):
         }
     )
 
-@app.action("plain_text_input_action")
+@app.action("admin_dept_drop_down_action")
 def update_modal(ack, body, client):
     ack()
-    print('this')
-
-
-@app.action("dept_drop_down_action")
-def update_modal(ack, body, client):
-    ack()
-    print('dept_drop_down_action_selected_successfully')
+    print('admin_dept_drop_down_action_selected_successfully')
     prev_blocks = body['view']['blocks'] # 0 > description, 1 > divider, 2 > radio, 3 > dropdown
     prev_blocks[2]['accessory']['initial_option'] = create_initial_options(body, 'add_update_radio_block', 'add_update_radio_buttons_action')
-    prev_blocks[3]['accessory']['initial_option'] = create_initial_options(body, 'dept_list_drop_down_block', 'dept_drop_down_action')
-
+    prev_blocks[3]['accessory']['initial_option'] = create_initial_options(body, 'dept_list_drop_down_block', 'admin_dept_drop_down_action')
     prev_blocks.append(
         create_block( 
             "Select",
@@ -386,7 +294,7 @@ def update_modal(ack, body, client):
             "type": "modal",
             # View identifier
             "callback_id": "update_files",
-            "title": {"type": "plain_text", "text": "Updated modal"},
+            "title": {"type": "plain_text", "text": "Stealth Mode"},
             "close": {"type": "plain_text", "text": "Close"},
             "submit": {"type": "plain_text", "text": "Submit"},
             "blocks": prev_blocks
@@ -399,7 +307,7 @@ def update_modal(ack, body, client):
     print('add_delete_category_action_selected_successfully')
     prev_blocks = body['view']['blocks'] # 0 > description, 1 > divider, 2 > radio, 3 > dropdown, 4 > radio 
     prev_blocks[2]['accessory']['initial_option'] = create_initial_options(body, 'add_update_radio_block', 'add_update_radio_buttons_action')
-    prev_blocks[3]['accessory']['initial_option'] = create_initial_options(body, 'dept_list_drop_down_block', 'dept_drop_down_action')
+    prev_blocks[3]['accessory']['initial_option'] = create_initial_options(body, 'dept_list_drop_down_block', 'admin_dept_drop_down_action')
     prev_blocks[4]['accessory']['initial_option'] = create_initial_options(body, 'add_delete_category_block', 'add_delete_category_action')
     # check delete or add
     if prev_blocks[4]['accessory']['initial_option']['value'] == 'del_cat':
@@ -441,46 +349,7 @@ def update_modal(ack, body, client):
             "type": "modal",
             # View identifier
             "callback_id": "update_files",
-            "title": {"type": "plain_text", "text": "Updated modal"},
-            "close": {"type": "plain_text", "text": "Close"},
-            "submit": {"type": "plain_text", "text": "Submit"},
-            "blocks": prev_blocks
-        }
-    )
-
-@app.action("add_delete_category_action")
-def update_modal(ack, body, client):
-    ack()
-    print('dept_drop_down_action_selected_successfully')
-    prev_blocks = body['view']['blocks'] # 0 > description, 1 > divider, 2 > radio, 3 > dropdown, 4 > radio 
-    prev_blocks[2]['accessory']['initial_option'] = create_initial_options(body, 'add_update_radio_block', 'add_update_radio_buttons_action')
-    prev_blocks[3]['accessory']['initial_option'] = create_initial_options(body, 'dept_list_drop_down_block', 'dept_drop_down_action')
-    prev_blocks[4]['accessory']['initial_option'] = create_initial_options(body, 'add_delete_category_block', 'add_delete_category_action')
-    prev_blocks.append({
-                    "type": "input",
-                    "block_id": "enter_category_text_block",
-                    "element": {
-                        "type": "plain_text_input",
-                        "multiline": True,
-                        "action_id": "plain_text_input_action"
-                    },
-                    "label": {
-                        "type": "plain_text",
-                        "text": "Enter Categories, separated by commas",
-                        "emoji": True
-                    }
-                })
-    client.views_update(
-        # Pass the view_id
-        view_id=body["view"]["id"],
-        # String that represents view state to protect against race conditions
-        hash=body["view"]["hash"],
-        # View payload with updated blocks
-        view={
-            "type": "modal",
-            # View identifier
-            "callback_id": "update_files",
-            "title": {"type": "plain_text", "text": "Updated modal"},
+            "title": {"type": "plain_text", "text": "Stealth Mode"},
             "close": {"type": "plain_text", "text": "Close"},
             "submit": {"type": "plain_text", "text": "Submit"},
             "blocks": prev_blocks
@@ -504,28 +373,41 @@ def open_modal(ack, shortcut, client, body, context):
             # "submit": {"type": "plain_text", "text": "Submit"},
             # https://app.slack.com/block-kit-builder
             "blocks": [
-                app_description_block(),
-                dept_selection_block("Select the Relevant Department", "Select an item")
+                create_block(
+                    'Your Personal Help Desk',
+                    block_id = "help_desk_description_block"
+                ),
+                {
+                    "type": "divider",
+                    "block_id": "divider_block"
+                },
+                create_block(
+                    "Select the Relevant Department",
+                    text2 = "Select an item",
+                    block_id = 'help_desk_dept_list_drop_down_block',
+                    type1 = 'static_select',
+                    action = 'help_desk_dept_drop_down_action',
+                    options = departments_list(),
+                ),
             ]
         }
     )
 # Second Page
-@app.action("dept_selection")
+@app.action("help_desk_dept_drop_down_action")
 def update_modal(ack, body, client):
     ack()
-    global options_2
-    options_2 = []
-    for option in data[body['actions'][0]['selected_option']['text']['text']]:
-        options_2.append(
-            {
-                "text": {
-                    "type": "plain_text",
-                    "text": option,
-                    "emoji": True
-                },
-                "value": f"hr_category_{option}"
-            }
+    prev_blocks = body['view']['blocks'] # 0 > description, 1 > divider, 2 > radio, 3 > dropdown, 4 > radio 
+    prev_blocks[2]['accessory']['initial_option'] = create_initial_options(body, 'help_desk_dept_list_drop_down_block', 'help_desk_dept_drop_down_action')
+    prev_blocks.append(
+        create_block(
+            "Select the issue category",
+            text2 = "Category",
+            block_id = 'help_desk_dept_category_list_drop_down_block',
+            type1 = 'static_select',
+            action = 'help_desk_dept_category_list_drop_down_action',
+            options = master_data[prev_blocks[2]['accessory']['initial_option']['text']['text']]['categories'],
         )
+    )
     client.views_update(
         # Pass the view_id
         view_id=body["view"]["id"],
@@ -536,25 +418,34 @@ def update_modal(ack, body, client):
             "type": "modal",
             # View identifier
             "callback_id": "dept_category_selection",
-            "title": {"type": "plain_text", "text": "Updated modal"},
-            "blocks": [
-                app_description_block(),
-                dept_selection_block(
-                    "Selected Department", 
-                    f"{ body['actions'][0]['selected_option']['text']['text']}"
-                ),
-                dept_category_selection_block(
-                    "Select the Issue Category",
-                    "Select an item"
-                ),
-            ]
+            "title": {"type": "plain_text", "text": "Stealth Mode"},
+            "blocks": prev_blocks
         }
     )
 
 # Third Page
-@app.action("dept_category_selection")
+@app.action("help_desk_dept_category_list_drop_down_action")
 def update_modal(ack, body, client):
     ack()
+    prev_blocks = body['view']['blocks'] # 0 > description, 1 > divider, 2 > radio, 3 > dropdown, 4 > radio 
+    prev_blocks[2]['accessory']['initial_option'] = create_initial_options(body, 'help_desk_dept_list_drop_down_block', 'help_desk_dept_drop_down_action')
+    prev_blocks[3]['accessory']['initial_option'] = create_initial_options(body, 'help_desk_dept_category_list_drop_down_block', 'help_desk_dept_category_list_drop_down_action')
+    prev_blocks.append(
+        {
+            "type": "input",
+            "block_id": "issue_description",
+            "element": {
+                "type": "plain_text_input",
+                "multiline": True,
+                "action_id": "plain_text_input_action"
+            },
+            "label": {
+                "type": "plain_text",
+                "text": "Describe your Issue",
+                "emoji": True
+            }
+        }
+    )
     client.views_update(
         # Pass the view_id
         view_id=body["view"]["id"],
@@ -565,40 +456,15 @@ def update_modal(ack, body, client):
             "type": "modal",
             # View identifier
             "callback_id": "create_ticket",
-            "title": {"type": "plain_text", "text": "Updated modal"},
+            "title": {"type": "plain_text", "text": "Stealth Mode"},
             "close": {"type": "plain_text", "text": "Close"},
             "submit": {"type": "plain_text", "text": "Submit"},
-            "blocks": [
-                app_description_block(),
-                dept_selection_block(
-                    "Selected Department",
-                    f"{ body['view']['blocks'][1]['accessory']['placeholder']['text']}"
-                ),
-                dept_category_selection_block(
-                    "Selected Issue Category",
-                    f"{ body['actions'][0]['selected_option']['text']['text'] }"
-                ),
-                {
-                    "type": "input",
-                    "block_id": "issue_description",
-                    "element": {
-                        "type": "plain_text_input",
-                        "multiline": True,
-                        "action_id": "plain_text_input_action"
-                    },
-                    "label": {
-                        "type": "plain_text",
-                        "text": "Describe your Issue",
-                        "emoji": True
-                    }
-                }
-            ]
+            "blocks": prev_blocks
         }
     )
 
-
 @app.view("create_ticket")
-def action_button_click(body, ack, say, view):
+def action_button_click(body, ack, say, client):
     # Acknowledge the action
     ack()
     # hopes_and_dreams = view["state"]["values"]["input_c"]["dreamy_input"]
@@ -609,7 +475,7 @@ def action_button_click(body, ack, say, view):
             "project": {
                 "key": "TEST" # Same as existing JIRA Project
             },
-            "summary": f"{body['view']['state']['values']['dept_category_selection']['dept_category_selection']['selected_option']['text']['text']}",
+            "summary": f"{body['view']['state']['values']['help_desk_dept_list_drop_down_block']['help_desk_dept_drop_down_action']['selected_option']['text']['text']}",
             "description": f"Issue created by: <@{body['user']['id']}>\nhttps://{body['team']['domain']}.slack.com/team/{body['user']['id']}\nDetails:\n{ body['view']['state']['values']['issue_description']['plain_text_input_action']['value'] }",
             "issuetype": {
                 "name": "Task"
@@ -628,12 +494,27 @@ def action_button_click(body, ack, say, view):
             )
     except Exception as e:
         print(e)
-
-    print(f"Ticket Created Successfully!")
-    say(
-        text = f"Ticket Created Successfully with reference id {resp.json()['key'] + ': ' + resp.json()['id']}!",
-        channel = body['user']['id']    
-    )
+        message = "Failed to Create Ticket!!! PLease try again or Contact I.T"
+    else:
+        message = "Ticket Created Successfully!"
+        say(
+            text = f"Ticket Created Successfully with reference id {resp.json()['key'] + ': ' + resp.json()['id']}!",
+            channel = body['user']['id']    
+        )
+    finally:
+        client.views_open(
+            trigger_id=body["trigger_id"],
+            # A simple view payload for a modal
+            view={
+                "type": "modal",
+                "callback_id": "add_dept_view",
+                "title": {"type": "plain_text", "text": "Stealth Mode"},
+                "close": {"type": "plain_text", "text": "Close"},
+                "blocks": [
+                    create_block(message)
+                ]
+            }
+        )
 
 # Start your app
 if __name__ == "__main__":
