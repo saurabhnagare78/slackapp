@@ -309,10 +309,20 @@ def update_modal(ack, body, client):
 @app.view("update_files")
 def handle_view_events(client,ack, body, logger):
     ack()
+    print(body)
     print('category_input_submitted_successfully')
     if body['view']['state']['values']['add_delete_category_block']['add_delete_category_action']['selected_option']['value'] == 'del_cat':
-        print('Delete Category Pending Call Successful')
+        print('Delete Category Pending Call Successful also update master data')
+        dept = body['view']['state']['values']['dept_list_drop_down_block']['dept_drop_down_action']['selected_option']['text']['text']
+        catg = body['view']['state']['values']['dept_category_list_drop_down_block']['dept_category_list_drop_down_action']['selected_option']['text']['text']
+        with open(f'{dept}_categories.txt','r') as fp:
+            catgs = fp.read().splitlines()
+            catgs.remove(catg)
+        with open(f'{dept}_categories.txt','w') as fp:
+            fp.write('\n'.join(catgs))
+            fp.write('\n')
         message = 'Category deleted Successfully!!!'
+        generate_master_dict()
     else:
         catgs = body['view']['state']['values']['enter_category_text_block']['plain_text_input_action']['value']
         catgs = catgs.split(',')
@@ -322,6 +332,8 @@ def handle_view_events(client,ack, body, logger):
                 if len(cat) > 0:
                     fp.write(cat+'\n')
         message = 'Category added Successfully!!!'
+        generate_master_dict()
+        print('Category added Successfully!also update master data')
     client.views_open(
         trigger_id=body["trigger_id"],
         # A simple view payload for a modal
