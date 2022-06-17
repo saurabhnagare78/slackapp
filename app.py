@@ -17,6 +17,8 @@ JIRA_USERNAME = configur.get("jira","JIRA_USERNAME")
 ######################################################################################
 ######################################################################################
 
+
+
 def create_field(text, value):
     '''
     Creates the options in the required format
@@ -29,6 +31,12 @@ def create_field(text, value):
         "value": value
     }
     return data
+
+def create_initial_options(body,block_name,block_action):
+    return create_field(
+        body['view']['state']['values'][block_name][block_action]['selected_option']['text']['text'],
+        body['view']['state']['values'][block_name][block_action]['selected_option']['value']
+    )
 
 def create_options(vals_list):
     '''
@@ -70,7 +78,7 @@ def generate_master_dict():
 generate_master_dict()
 # blocks with action_id calls `@app.action` decorator with the defined name
 # eg. "action_id": 'demo_action' will execute @app.action('demo_action')
-def create_block(text1, options = None, action = None, initial_option = None, text2 = None, type1 = None, block_id = None):
+def create_block(text1, options = None, action = None, initial_option = None, text2 = None, type1 = None, block_id = None, type2 = 'section'):
     '''
     To generate block, 
     type ->
@@ -84,21 +92,27 @@ def create_block(text1, options = None, action = None, initial_option = None, te
     action -> the function to call on user interaction with this block
     '''
     # Block Pre Meta
+    if type2 == 'section':
+        elem_or_acc = 'accessory'
+        text_or_labl = 'text'
+    else:
+        elem_or_acc = 'element'
+        text_or_labl = 'label'
     data={
-        'type': 'section',
-        'text': {
-            'type': "mrkdwn",
-            'text': f'*{text1}*'
+        'type': type2,
+        text_or_labl: {
+            'type': "plain_text",
+            'text': text1
         }
     }
     if type1:
-        data['accessory'] =  {
+        data[elem_or_acc] =  {
             'type': type1,
             'options': options,
             'action_id': action,
         }
     if initial_option:
-        data['accessory']['initial_option'] = {
+        data[elem_or_acc]['initial_option'] = {
             "value": initial_option['value'],
             "text": {
                 "type": "plain_text",
@@ -106,7 +120,7 @@ def create_block(text1, options = None, action = None, initial_option = None, te
             }
         }
     if type1 == 'static_select':
-        data['accessory']['placeholder'] = {
+        data[elem_or_acc]['placeholder'] = {
             "type": "plain_text",
             "text": text2,
         }
@@ -245,15 +259,26 @@ def open_modal(ack, body, logger, shortcut, client):
                 ]
             }
         )
+    else:
+        client.views_open(
+        trigger_id=shortcut["trigger_id"],
+        # A simple view payload for a modal
+        view={
+            "type": "modal",
+            "callback_id": "add_dept_view",
+            "title": {"type": "plain_text", "text": "Stealth Mode"},
+            "close": {"type": "plain_text", "text": "Close"},
+            "blocks": [
+                create_block('Only Admins are allowed to use this feature!!!')
+            ]
+        }
+        )
 @app.action("add_update_radio_buttons_action")
-def update_modal(ack, body, client, shortcut):
+def update_modal(ack, body, client):
     ack()
     print('radio_button_selected_successfully')
     prev_blocks = body['view']['blocks'] # 0 > description, 1 > divider, 2 > radio, 3 > dropdown
-    prev_blocks[2]['accessory']['initial_option'] = create_field(
-        body['view']['state']['values']['add_update_radio_block']['add_update_radio_buttons_action']['selected_option']['text']['text'],
-        body['view']['state']['values']['add_update_radio_block']['add_update_radio_buttons_action']['selected_option']['value']
-    )
+    prev_blocks[2]['accessory']['initial_option'] = create_initial_options(body, 'add_update_radio_block', 'add_update_radio_buttons_action')
     prev_blocks.append(create_block(
                         "Select the Relevant Department",
                         text2 = "Select an item",
@@ -282,33 +307,143 @@ def update_modal(ack, body, client, shortcut):
         pass
 
 @app.view("update_files")
-def handle_view_events(ack, body, logger):
+def handle_view_events(client,ack, body, logger):
     ack()
     print('category_input_submitted_successfully')
-    print(body,'#'*150)
-    catgs = body['view']['state']['values']['enter_category_text_block']['plain_text_input_action']['value']
-    catgs = catgs.split(',')
-    dept = body['view']['state']['values']['dept_list_drop_down_block']['dept_drop_down_action']['selected_option']['text']['text']
-    with open(f'{dept}_categories.txt','a') as fp:
-        for cat in catgs:
-            if len(cat) > 0:
-                fp.write(cat+'\n')
+    if body['view']['state']['values']['add_delete_category_block']['add_delete_category_action']['selected_option']['value'] == 'del_cat':
+        print('Delete Category Pending Call Successful')
+        message = 'Category deleted Successfully!!!'
+    else:
+        catgs = body['view']['state']['values']['enter_category_text_block']['plain_text_input_action']['value']
+        catgs = catgs.split(',')
+        dept = body['view']['state']['values']['dept_list_drop_down_block']['dept_drop_down_action']['selected_option']['text']['text']
+        with open(f'{dept}_categories.txt','a') as fp:
+            for cat in catgs:
+                if len(cat) > 0:
+                    fp.write(cat+'\n')
+        message = 'Category added Successfully!!!'
+    client.views_open(
+        trigger_id=body["trigger_id"],
+        # A simple view payload for a modal
+        view={
+            "type": "modal",
+            "callback_id": "add_dept_view",
+            "title": {"type": "plain_text", "text": "Stealth Mode"},
+            "close": {"type": "plain_text", "text": "Close"},
+            "blocks": [
+                create_block(message)
+            ]
+        }
+    )
+
+@app.action("plain_text_input_action")
+def update_modal(ack, body, client):
+    ack()
+    print('this')
 
 
 @app.action("dept_drop_down_action")
 def update_modal(ack, body, client):
     ack()
     print('dept_drop_down_action_selected_successfully')
-    print(body,'#'*150)
     prev_blocks = body['view']['blocks'] # 0 > description, 1 > divider, 2 > radio, 3 > dropdown
-    prev_blocks[2]['accessory']['initial_option'] = create_field(
-        body['view']['state']['values']['add_update_radio_block']['add_update_radio_buttons_action']['selected_option']['text']['text'],
-        body['view']['state']['values']['add_update_radio_block']['add_update_radio_buttons_action']['selected_option']['value']
+    prev_blocks[2]['accessory']['initial_option'] = create_initial_options(body, 'add_update_radio_block', 'add_update_radio_buttons_action')
+    prev_blocks[3]['accessory']['initial_option'] = create_initial_options(body, 'dept_list_drop_down_block', 'dept_drop_down_action')
+
+    prev_blocks.append(
+        create_block( 
+            "Select",
+            block_id = "add_delete_category_block",
+            options = create_options(
+                [
+                    ("Add New Category","add_cat"),
+                    ("Delete a Category","del_cat")
+                ]
+            ),
+            action = "add_delete_category_action",
+            type1 = 'radio_buttons'
+        )
     )
-    prev_blocks[3]['accessory']['initial_option'] = create_field(
-        body['view']['state']['values']['dept_list_drop_down_block']['dept_drop_down_action']['selected_option']['text']['text'],
-        body['view']['state']['values']['dept_list_drop_down_block']['dept_drop_down_action']['selected_option']['value']
+    client.views_update(
+        # Pass the view_id
+        view_id=body["view"]["id"],
+        # String that represents view state to protect against race conditions
+        hash=body["view"]["hash"],
+        # View payload with updated blocks
+        view={
+            "type": "modal",
+            # View identifier
+            "callback_id": "update_files",
+            "title": {"type": "plain_text", "text": "Updated modal"},
+            "close": {"type": "plain_text", "text": "Close"},
+            "submit": {"type": "plain_text", "text": "Submit"},
+            "blocks": prev_blocks
+        }
     )
+
+@app.action("add_delete_category_action")
+def update_modal(ack, body, client):
+    ack()
+    print('add_delete_category_action_selected_successfully')
+    prev_blocks = body['view']['blocks'] # 0 > description, 1 > divider, 2 > radio, 3 > dropdown, 4 > radio 
+    prev_blocks[2]['accessory']['initial_option'] = create_initial_options(body, 'add_update_radio_block', 'add_update_radio_buttons_action')
+    prev_blocks[3]['accessory']['initial_option'] = create_initial_options(body, 'dept_list_drop_down_block', 'dept_drop_down_action')
+    prev_blocks[4]['accessory']['initial_option'] = create_initial_options(body, 'add_delete_category_block', 'add_delete_category_action')
+    # check delete or add
+    if prev_blocks[4]['accessory']['initial_option']['value'] == 'del_cat':
+        prev_blocks.append(
+            create_block(
+                "Select the category you want to delete",
+                text2 = "Category",
+                type2 = 'input',
+                block_id = 'dept_category_list_drop_down_block',
+                type1 = 'static_select',
+                action = 'dept_category_list_drop_down_action',
+                options = master_data[prev_blocks[3]['accessory']['initial_option']['text']['text']]['categories'],
+            )
+        )
+    else:
+        prev_blocks.append(
+            {
+                "type": "input",
+                "block_id": "enter_category_text_block",
+                "element": {
+                    "type": "plain_text_input",
+                    "multiline": True,
+                    "action_id": "plain_text_input_action"
+                },
+                "label": {
+                    "type": "plain_text",
+                    "text": "Enter Categories, separated by commas",
+                    "emoji": True
+                }
+            }
+        )
+    client.views_update(
+        # Pass the view_id
+        view_id=body["view"]["id"],
+        # String that represents view state to protect against race conditions
+        hash=body["view"]["hash"],
+        # View payload with updated blocks
+        view={
+            "type": "modal",
+            # View identifier
+            "callback_id": "update_files",
+            "title": {"type": "plain_text", "text": "Updated modal"},
+            "close": {"type": "plain_text", "text": "Close"},
+            "submit": {"type": "plain_text", "text": "Submit"},
+            "blocks": prev_blocks
+        }
+    )
+
+@app.action("add_delete_category_action")
+def update_modal(ack, body, client):
+    ack()
+    print('dept_drop_down_action_selected_successfully')
+    prev_blocks = body['view']['blocks'] # 0 > description, 1 > divider, 2 > radio, 3 > dropdown, 4 > radio 
+    prev_blocks[2]['accessory']['initial_option'] = create_initial_options(body, 'add_update_radio_block', 'add_update_radio_buttons_action')
+    prev_blocks[3]['accessory']['initial_option'] = create_initial_options(body, 'dept_list_drop_down_block', 'dept_drop_down_action')
+    prev_blocks[4]['accessory']['initial_option'] = create_initial_options(body, 'add_delete_category_block', 'add_delete_category_action')
     prev_blocks.append({
                     "type": "input",
                     "block_id": "enter_category_text_block",
@@ -323,8 +458,6 @@ def update_modal(ack, body, client):
                         "emoji": True
                     }
                 })
-    choice = body['actions'][0]['selected_option']
-    choice2 = body['view']['blocks'][2]['accessory']['initial_option']
     client.views_update(
         # Pass the view_id
         view_id=body["view"]["id"],
