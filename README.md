@@ -56,9 +56,10 @@ Slack apps use OAuth to manage access to Slack’s APIs. When an app is installe
     <img src="./images/bot-token.png"/>
 </p>
 
-- Head over to Basic Information and scroll down under the App-Level Token section > Generate Token and Scopes (to generate an app-level token). 
-    - Add token name and the `connections:write` scope to this token and save the generated xapp token.
 - Navigate to Socket Mode on the left side menu and toggle to enable. ( We will change it to http later )
+- Head over to Basic Information and scroll down under the App-Level Token section > Generate Token and Scopes (to generate an app-level token). 
+- Add token name and the `connections:write` scope to this token and save the generated xapp token.
+
 
 ## Setting up events
 > For HTTP mode we will have to add a `Request URL` as well.
